@@ -31,6 +31,20 @@ class Tile(Canvas):
 
         # all other states result in no change
 
+    def set_state(self, event):
+        '''Tile.set_state(event)
+        handler method for game initiation'''
+        self.state = self.state ^ True # toggles state
+        self.update_display()
+
+    def update_display(self):
+        '''Tile.update_disply()
+        used to update every tile at once'''
+        if self.state:
+            self['bg'] = 'black'
+        else:
+            self['bg'] = 'white'
+
     
         
         
