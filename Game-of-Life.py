@@ -11,11 +11,12 @@ class Tile(Canvas):
         Canvas.__init__(self, master, width=10, height=10, bg='white', bd=0)
         self.state = False # a boolean to represent whether a tile is alive
         self.settable = True # if true, the tile can be toggled by clicking
+        self.return_state = False # the state that the tile will return
         
     def get_state(self):
         '''Tile.get_state()
         returns the Tile.state attribute'''
-        return self.state
+        return self.return_state
 
     def change_state(self, tiles):
         '''Tile.change_state(tiles)
@@ -42,6 +43,7 @@ class Tile(Canvas):
     def update_display(self):
         '''Tile.update_disply()
         used to update every tile at once'''
+        self.return_state = self.state
         if self.state:
             self['bg'] = 'black'
         else:
@@ -60,9 +62,27 @@ class GameOfLife(Frame):
         for i in range(width):
             for j in range(height):
                 self.tiles[(i, j)] = Tile(master)
-                self.tiles[(i, j)].grid()
+                self.tiles[(i, j)].grid(column = i, row = j)
+        self.width = width
+        self.height = height
         
-        
+    def update_tile(self, x, y):
+        '''GameOfLife.update_tile(x, y)
+        creates a list to pass to the Tile.change_state method'''
+        neighbour_tiles = []
+        for i in range(x-1, x+2): 
+            for j in range(y-1, y+2):
+                if width>i>-1 and height>j>-1: #checks if the area is defined
+                    neighbour_tiles.append(self.tiles[(i, j)])
+        self.tiles[(x, y)].change_state(neighbour_tiles)
+
+    def advance_time(self):
+        '''GameOfLife.advance_time()
+        changes time by 1 step by updating each tile'''
+        for i in range(width):
+            for j in range(height):
+                self.update_tile(i, j)
+                
 
     
         
