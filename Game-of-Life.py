@@ -1,4 +1,6 @@
 from tkinter import *
+from time import sleep
+import threading
 
 class Tile(Canvas):
     '''a class to represent one square in a game of life'''
@@ -12,6 +14,7 @@ class Tile(Canvas):
         self.state = False # a boolean to represent whether a tile is alive
         self.settable = True # if true, the tile can be toggled by clicking
         self.return_state = False # the state that the tile will return
+        self.bind('<Button-1>', self.set_state)
         
     def get_state(self):
         '''Tile.get_state()
@@ -24,11 +27,13 @@ class Tile(Canvas):
         tiles should be a list of the surrounding tiles'''
         # calculate the number of neighbouring tiles are alive
         neighbour_count = sum([1 for i in tiles if i.get_state()])
+        if self.state: #remove yourself from the count
+            neighbour_count -= 1
         # triggers on the two death conditions of overcrowding or underpop
-        if neighbour_count == 1 or neighbour_count >= 4:
+        if neighbour_count <= 1 or neighbour_count >= 4:
             self.state = False
         # triggers on the reproduction condition
-        elif neightbour_count == 3 and not self.state:
+        elif neighbour_count == 3:
             self.state = True
 
         # all other states result in no change
@@ -57,14 +62,18 @@ class GameOfLife(Frame):
         width and height are both measured in tiles'''
         # set up Frame object
         Frame.__init__(self, master)
-        self.grid()
-        self.tiles = {}
+        self.grid() 
+        self.tiles = {} # a dict to hold each tile and it's position
         for i in range(width):
             for j in range(height):
                 self.tiles[(i, j)] = Tile(master)
-                self.tiles[(i, j)].grid(column = i, row = j)
+                self.tiles[(i, j)].grid(column = i, row = j+1)
         self.width = width
         self.height = height
+        self.start_button = Button(self, text='start', command=self.start)
+        self.start_button.grid(row=1, column=1, columnspan=2)
+        
+
         
     def update_tile(self, x, y):
         '''GameOfLife.update_tile(x, y)
@@ -72,19 +81,26 @@ class GameOfLife(Frame):
         neighbour_tiles = []
         for i in range(x-1, x+2): 
             for j in range(y-1, y+2):
-                if width>i>-1 and height>j>-1: #checks if the area is defined
+                if self.width>i and i>-1 and self.height>j and j>-1:
                     neighbour_tiles.append(self.tiles[(i, j)])
         self.tiles[(x, y)].change_state(neighbour_tiles)
 
     def advance_time(self):
         '''GameOfLife.advance_time()
         changes time by 1 step by updating each tile'''
-        for i in range(width):
-            for j in range(height):
+        for i in self.tiles:
+            self.tiles[i].update_display()
+        sleep(1)
+        for i in range(self.width):
+            for j in range(self.height):
                 self.update_tile(i, j)
-                
-
+        self.advance_time() #infinite recursion
+        
+    def start(self):
+        thread1 = threading.Thread(target=self.advance_time)
+        thread1.start()
     
-        
-        
-        
+
+root = Tk()
+g = GameOfLife(root, 10, 10)
+root.mainloop()
