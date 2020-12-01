@@ -12,9 +12,8 @@ class Tile(Canvas):
         # canvas purely to show state using the background
         Canvas.__init__(self, master, width=10, height=10, bg='white', bd=0)
         self.state = False # a boolean to represent whether a tile is alive
-        self.settable = True # if true, the tile can be toggled by clicking
         self.return_state = False # the state that the tile will return
-        self.bind('<Button-1>', self.set_state)
+        self.re_bind()
         
     def get_state(self):
         '''Tile.get_state()
@@ -41,9 +40,8 @@ class Tile(Canvas):
     def set_state(self, event):
         '''Tile.set_state(event)
         handler method for game initiation'''
-        if self.settable:
-            self.state = self.state ^ True # toggles state
-            self.update_display()
+        self.state = self.state ^ True # toggles state
+        self.update_display()
             
     def update_display(self):
         '''Tile.update_disply()
@@ -53,10 +51,19 @@ class Tile(Canvas):
             self['bg'] = 'black'
         else:
             self['bg'] = 'white'
+    def un_bind(self):
+        '''Tile.unbind()
+        unbinds the tile to optimize lag'''
+        self.unbind('<Button-1>')
+    def re_bind(self):
+        '''Tile.rebind()
+        binds the tile'''
+        self.bind('<Button-1>', self.set_state)
+        
 
 class GameOfLife(Frame):
     '''frame for the game of life'''
-    def __init__(self, master, width, height):
+    def __init__(self, master, width, height, time):
         '''GameOfLife(master, name) -> GameOfLife
         create a new game of life
         width and height are both measured in tiles'''
@@ -72,7 +79,8 @@ class GameOfLife(Frame):
         self.height = height
         self.start_button = Button(self, text='start', command=self.start)
         self.start_button.grid(row=1, column=1, columnspan=2)
-        
+        self.time = time
+        self.stop()
 
         
     def update_tile(self, x, y):
@@ -88,19 +96,31 @@ class GameOfLife(Frame):
     def advance_time(self):
         '''GameOfLife.advance_time()
         changes time by 1 step by updating each tile'''
+        if not self.running:
+            return
         for i in self.tiles:
             self.tiles[i].update_display()
-        sleep(1)
+        sleep(self.time)
         for i in range(self.width):
             for j in range(self.height):
                 self.update_tile(i, j)
         self.advance_time() #infinite recursion
         
     def start(self):
+        self.start_button['command'] = self.stop
+        self.running = True
         thread1 = threading.Thread(target=self.advance_time)
         thread1.start()
+        for i in self.tiles:
+            self.tiles[i].un_bind()
+            
+    def stop(self):
+        self.running = False
+        self.start_button['command'] = self.start
+        for i in self.tiles:
+            self.tiles[i].re_bind()
     
 
 root = Tk()
-g = GameOfLife(root, 10, 10)
+g = GameOfLife(root, 25, 25, 0.1)
 root.mainloop()
