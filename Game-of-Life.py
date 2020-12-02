@@ -4,7 +4,6 @@ import threading
 
 class Tile(Canvas):
     '''a class to represent one square in a game of life'''
-    
     def __init__(self, master):
         '''Tile(master, x, y) -> Tile
         create a new Tile with left handed coordinates
@@ -32,22 +31,25 @@ class Tile(Canvas):
         # triggers on the reproduction condition
         elif neighbour_count == 3:
             self.state = True
-
         # all other states result in no change
 
     def set_state(self):
         '''Tile.set_state(event)
         handler method for game initiation'''
         self.state = self.state ^ True # toggles state
+        
     def update_tile(self):
         '''Tile.update_tile()
         ses the return staet to the state, and returns the state'''
         self.return_state = self.state
         return self.state
+
     
 class TileContainer(Canvas):
     '''a canvas to display and get inputs for the tile class'''
     def __init__(self, master, width, height, tile_size, time):
+        '''TileContainer(master, width, height, tile_size, time)-> TileContainer
+        '''
         self.tile_size = tile_size
         self.width = width
         self.height = height
@@ -70,7 +72,6 @@ class TileContainer(Canvas):
                 if self.width>i and i>-1 and self.height>j and j>-1:
                     neighbour_tiles.append(self.tiles[(i, j)])
         self.tiles[(x, y)].change_state(neighbour_tiles)
-        
 
     def advance_time(self):
         '''TileContainer.advance_time()
@@ -98,6 +99,7 @@ class TileContainer(Canvas):
                 self.create_rectangle(i[0]*self.tile_size, i[1]*self.tile_size, \
                                       (i[0]+1)*self.tile_size, \
                                  (i[1]+1)*self.tile_size, fill='black')
+                
     def set_running(self, boolean):
         '''TileContainer.set_running()
         changes whether or not the game of life is running'''
@@ -120,18 +122,20 @@ class GameOfLife(Frame):
         self.stop()
         
     def start(self):
+        '''GameOfLife.start() start up the game of life'''
         self.start_button['command'] = self.stop
         self.start_button['text'] = 'STOP'
         self.container.set_running(True)
         thread1 = threading.Thread(target=self.container.advance_time)
         thread1.start()
 
-            
     def stop(self):
+        '''GameOfLife.stop() stop the game of life'''
         self.container.set_running(False)
         self.start_button['command'] = self.start
         self.start_button['text'] = 'START'
+        
 
 root = Tk()
-g = GameOfLife(root, 80, 80, 0.1, 10)
+g = GameOfLife(root, 80, 80, 0.01, 8)
 root.mainloop()
