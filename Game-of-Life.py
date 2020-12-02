@@ -10,10 +10,8 @@ class Tile(Canvas):
         create a new Tile with left handed coordinates
         x and y'''
         # canvas purely to show state using the background
-        Canvas.__init__(self, master, width=10, height=10, bg='white', bd=0)
         self.state = False # a boolean to represent whether a tile is alive
         self.return_state = False # the state that the tile will return
-        self.re_bind()
         
     def get_state(self):
         '''Tile.get_state()
@@ -37,54 +35,34 @@ class Tile(Canvas):
 
         # all other states result in no change
 
-    def set_state(self, event):
+    def set_state(self):
         '''Tile.set_state(event)
         handler method for game initiation'''
         self.state = self.state ^ True # toggles state
-        self.update_display()
-            
-    def update_display(self):
-        '''Tile.update_disply()
-        used to update every tile at once'''
+    def update_tile(self):
+        '''Tile.update_tile()
+        ses the return staet to the state, and returns the state'''
         self.return_state = self.state
-        if self.state:
-            self['bg'] = 'black'
-        else:
-            self['bg'] = 'white'
-    def un_bind(self):
-        '''Tile.unbind()
-        unbinds the tile to optimize lag'''
-        self.unbind('<Button-1>')
-    def re_bind(self):
-        '''Tile.rebind()
-        binds the tile'''
-        self.bind('<Button-1>', self.set_state)
-        
-
-class GameOfLife(Frame):
-    '''frame for the game of life'''
-    def __init__(self, master, width, height, time):
-        '''GameOfLife(master, name) -> GameOfLife
-        create a new game of life
-        width and height are both measured in tiles'''
-        # set up Frame object
-        Frame.__init__(self, master)
-        self.grid() 
+        return self.state
+    
+class TileContainer(Canvas):
+    '''a canvas to display and get inputs for the tile class'''
+    def __init__(self, master, width, height, tile_size, time):
+        self.tile_size = tile_size
+        self.width = width
+        self.height = height
+        Canvas.__init__(self, master, width=self.width*self.tile_size, \
+                        height=self.height*self.tile_size)
+        self.running = False
         self.tiles = {} # a dict to hold each tile and it's position
         for i in range(width):
             for j in range(height):
                 self.tiles[(i, j)] = Tile(master)
-                self.tiles[(i, j)].grid(column = i, row = j+1)
-        self.width = width
-        self.height = height
-        self.start_button = Button(self, text='start', command=self.start)
-        self.start_button.grid(row=1, column=1, columnspan=2)
+        self.bind('<Button-1>', self.click)
         self.time = time
-        self.stop()
 
-        
     def update_tile(self, x, y):
-        '''GameOfLife.update_tile(x, y)
+        '''TileContainer.update_tile(x, y)
         creates a list to pass to the Tile.change_state method'''
         neighbour_tiles = []
         for i in range(x-1, x+2): 
@@ -92,35 +70,68 @@ class GameOfLife(Frame):
                 if self.width>i and i>-1 and self.height>j and j>-1:
                     neighbour_tiles.append(self.tiles[(i, j)])
         self.tiles[(x, y)].change_state(neighbour_tiles)
+        
 
     def advance_time(self):
-        '''GameOfLife.advance_time()
+        '''TileContainer.advance_time()
         changes time by 1 step by updating each tile'''
         if not self.running:
             return
-        for i in self.tiles:
-            self.tiles[i].update_display()
+        self.update_display()
         sleep(self.time)
         for i in range(self.width):
             for j in range(self.height):
                 self.update_tile(i, j)
         self.advance_time() #infinite recursion
         
+    def click(self, event):
+        '''a handler method for clicking the canvas'''
+        self.tiles[(event.x//self.tile_size, event.y//self.tile_size)].set_state()
+        self.update_display()
+
+    def update_display(self):
+        '''a method called to update all of the tiles'''
+        self.delete('all')
+        for i in self.tiles:
+            self.tiles[i].update_tile()
+            if self.tiles[i].get_state():
+                self.create_rectangle(i[0]*self.tile_size, i[1]*self.tile_size, \
+                                      (i[0]+1)*self.tile_size, \
+                                 (i[1]+1)*self.tile_size, fill='black')
+    def set_running(self, boolean):
+        '''TileContainer.set_running()
+        changes whether or not the game of life is running'''
+        self.running = boolean
+                
+
+class GameOfLife(Frame):
+    '''frame for the game of life'''
+    def __init__(self, master, width, height, time, tile_size):
+        '''GameOfLife(master, name) -> GameOfLife
+        create a new game of life
+        width and height are both measured in tiles'''
+        # set up Frame object
+        Frame.__init__(self, master)
+        self.grid() 
+        self.start_button = Button(self, text='start', command=self.start)
+        self.start_button.grid(row=1, column=1, columnspan=2)
+        self.container = TileContainer(self, width, height, tile_size, time)
+        self.container.grid(row=2, column=2)
+        self.stop()
+        
     def start(self):
         self.start_button['command'] = self.stop
-        self.running = True
-        thread1 = threading.Thread(target=self.advance_time)
+        self.start_button['text'] = 'STOP'
+        self.container.set_running(True)
+        thread1 = threading.Thread(target=self.container.advance_time)
         thread1.start()
-        for i in self.tiles:
-            self.tiles[i].un_bind()
+
             
     def stop(self):
-        self.running = False
+        self.container.set_running(False)
         self.start_button['command'] = self.start
-        for i in self.tiles:
-            self.tiles[i].re_bind()
-    
+        self.start_button['text'] = 'START'
 
 root = Tk()
-g = GameOfLife(root, 25, 25, 0.1)
+g = GameOfLife(root, 80, 80, 0.1, 10)
 root.mainloop()
