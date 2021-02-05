@@ -1,6 +1,7 @@
 from tkinter import *
 from time import sleep
 import threading
+from random import randint
 
 class LifeBoard(Canvas):
     def __init__(self, master, size, buffer):
@@ -10,7 +11,7 @@ class LifeBoard(Canvas):
         Canvas.__init__(self, master, bg="grey", width=size*10, height=size*10)
         self.size = size
         self.buffer = buffer
-        self.current_tiles = {(25,25), (26,25), (27,25), (27,24), (24, 24), (25, 23)}
+        self.current_tiles = {(24,25), (25,25), (26,25), (26,24), (23, 24), (24, 23)}
         self.next_tiles = set()
         self.neighbours = [(1, 1), (1, 0), (1, -1), (0, 1), (0, -1), (-1, 1), (-1, 0), (-1, -1)]
         self.tile_images = []
@@ -74,7 +75,20 @@ class LifeBoard(Canvas):
         self.current_tiles = {(25,25), (26,25), (27,25), (27,24), (24, 24), (25, 23)}
         self.next_tiles = set()
         self.update_display()
-    
+    def rand(self, depth):
+        self.current_tiles = set()
+        self.next_tiles = set()
+        self.current_tiles.add((self.size//2, self.size//2))
+        visited = {(self.size//2, self.size//2)}
+        for i in range(depth):
+            for a, b in self.current_tiles:
+                for x, y in self.neighbours:
+                    if (a+x, b+y) not in visited and randint(1, 10) > 5:
+                        self.next_tiles.add((a+x, b+y))
+                    visited.add((a+x, b+y))
+            self.current_tiles|=self.next_tiles.copy()
+            self.next_tiles = set()
+        self.update_display()
 class LifeFrame(Frame):
     def __init__(self, master, size, time_step):
         '''LifeFrame(master) -> new LifeFrame
@@ -91,6 +105,8 @@ class LifeFrame(Frame):
         self.stop_start_button.grid()
         self.reset_button = Button(master, text="reset", command=self.reset)
         self.reset_button.grid()
+        self.random_button = Button(master, text="random", command=self.randomize)
+        self.random_button.grid()
         
     def loop(self):
         '''LifeFrame.loop()
@@ -117,7 +133,12 @@ class LifeFrame(Frame):
         resets the LifeBoard obj'''
         self.stop()
         self.board.reset()
+    def randomize(self):
+        '''LifeFrame.randomize()
+        handler for randomize button'''
+        self.stop()
+        self.board.rand(5)
         
 root = Tk()
-l = LifeFrame(root, 50, 10)
+l = LifeFrame(root, 50, 5)
 root.mainloop()
