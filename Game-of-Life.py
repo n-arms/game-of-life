@@ -10,9 +10,10 @@ class LifeBoard(Canvas):
         Canvas.__init__(self, master, width=size*10, height=size*10)
         self.size = size
         self.buffer = buffer
-        self.current_tiles = {(1, 1), (1, 2), (1, 3)} #a set of tuples of positions
-        self.next_tiles = set() #a set of tuples of positions
+        self.current_tiles = {(3, 3), (3, 4), (3, 5)} #a set of tuples of positions
+        self.next_tiles = set()
         self.neighbours = [(1, 1), (1, 0), (1, -1), (0, 1), (0, -1), (-1, 1), (-1, 0), (-1, -1)]
+        self.tile_images = [] 
         
     def update(self):
         '''LifeBoard.update()
@@ -33,6 +34,7 @@ class LifeBoard(Canvas):
                     else:
                         self.next_tiles.discard((a+i, b+j))
         self.current_tiles = self.next_tiles.copy()
+        self.update_display()
         
     def test_tile(self, x, y):
         '''LifeBoard.test_tile(x, y) -> boolean
@@ -48,6 +50,14 @@ class LifeBoard(Canvas):
             return True
         else:
             return False
+        
+    def update_display(self):
+        '''LifeBoard.update_display()
+        updates all of the tiles based off of the new current_tiles set'''
+        for i in self.tile_images:
+            self.delete(i)
+        for a, b in self.current_tiles:
+            self.tile_images.append(self.create_rectangle(10*a, 10*b, 10*a+10, 10*b+10))
     
 
 class LifeFrame(Frame):
@@ -58,9 +68,15 @@ class LifeFrame(Frame):
         self.grid()
         self.board = LifeBoard(master, 10, 20)
         self.board.grid()
+        self.time = 50
+        self.loop()
+        
     def loop(self):
         '''LifeFrame.loop()
         start the gameplay loop'''
-
+        self.board.update()
+        self.after(self.time, self.loop)
+        
 root = Tk()
 l = LifeFrame(root)
+root.mainloop()
