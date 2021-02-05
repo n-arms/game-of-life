@@ -41,7 +41,7 @@ class LifeBoard(Canvas):
         '''LifeBoard.test_tile(x, y) -> boolean
         given a position, using the current tiles,
         check whether during the next run it will be highlighted'''
-        if x<0 or x>self.size or y<0 or y>self.size:
+        if x<(-1*self.buffer) or x>(self.size+self.buffer) or y<(-1*self.buffer) or y>(self.buffer+self.size):
             return False
         
         total = 0
@@ -65,11 +65,14 @@ class LifeBoard(Canvas):
     def click(self, event):
         '''LifeBoard.click()
         handler method for clicks'''
-        print("click")
         if (event.x//10, event.y//10) in self.current_tiles:
             self.current_tiles.discard((event.x//10, event.y//10))
         else:
             self.current_tiles.add((event.x//10, event.y//10))
+        self.update_display()
+    def reset(self):
+        self.current_tiles = {(25,25), (26,25), (27,25), (27,24), (24, 24), (25, 23)}
+        self.next_tiles = set()
         self.update_display()
     
 class LifeFrame(Frame):
@@ -82,8 +85,12 @@ class LifeFrame(Frame):
         self.board.grid()
         self.time = time_step
         self.looping = False
+        self.size = size
+        self.master = master
         self.stop_start_button = Button(master, text="start", command=self.start)
         self.stop_start_button.grid()
+        self.reset_button = Button(master, text="reset", command=self.reset)
+        self.reset_button.grid()
         
     def loop(self):
         '''LifeFrame.loop()
@@ -105,6 +112,11 @@ class LifeFrame(Frame):
         self.looping = False
         self.stop_start_button["text"] = "start"
         self.stop_start_button["command"] = self.start
+    def reset(self):
+        '''LifeFrame.reset()
+        resets the LifeBoard obj'''
+        self.stop()
+        self.board.reset()
         
 root = Tk()
 l = LifeFrame(root, 50, 10)

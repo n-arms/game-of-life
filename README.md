@@ -7,4 +7,4 @@ The exact rules are as follows:
 - A live cell dies if it has less than 2 or more than 3 neighbours
 - If a dead cell has exactly 3 neighbours it becomes alive
 
-My specific implementation only tracks tiles that are on screen, and so starting a configuration in a different place will result in different outcomes.
+
