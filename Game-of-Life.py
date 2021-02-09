@@ -107,13 +107,15 @@ class LifeFrame(Frame):
         self.reset_button.grid()
         self.random_button = Button(master, text="random", command=self.randomize)
         self.random_button.grid()
+        self.speed_slider = Scale(master, from_=10, to=100, orient=HORIZONTAL)
+        self.speed_slider.grid()
         
     def loop(self):
         '''LifeFrame.loop()
         start the gameplay loop'''
         if self.looping:
             self.board.update()
-            self.after(self.time, self.loop)
+            self.after(self.speed_slider.get(), self.loop)
     def start(self):
         '''LifeFrame.start()
         starts the mainloop of the game of life'''
