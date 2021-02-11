@@ -1,7 +1,15 @@
 from tkinter import *
-from time import sleep
+from time import sleep, time
 import threading
 from random import randint
+
+class Timer:
+    def __init__(self):
+        self.last = time()
+    def __str__(self):
+        return str(time()-self.last)
+    def reset(self):
+        self.last = time()
 
 class LifeBoard(Canvas):
     def __init__(self, master, size, buffer):
@@ -16,10 +24,12 @@ class LifeBoard(Canvas):
         self.neighbours = [(1, 1), (1, 0), (1, -1), (0, 1), (0, -1), (-1, 1), (-1, 0), (-1, -1)]
         self.tile_images = []
         self.bind('<Button-1>', self.click)
+        self.timer = Timer()
         
     def update(self):
         '''LifeBoard.update()
         updates the board, clears all tiles and adds new ones'''
+        
         tested = set()
         for i, j in self.current_tiles:
             if (i, j) not in tested:
@@ -36,8 +46,9 @@ class LifeBoard(Canvas):
                     else:
                         self.next_tiles.discard((a+i, b+j))
         self.current_tiles = self.next_tiles.copy()
+        #print(f"timer: {str(self.timer)} size of tested: {len(tested)}, size of current tiles: {len(self.current_tiles)}, size of next: {len(self.next_tiles)}")
+        #self.timer.reset()
         self.update_display()
-        
     def test_tile(self, x, y):
         '''LifeBoard.test_tile(x, y) -> boolean
         given a position, using the current tiles,
@@ -59,10 +70,14 @@ class LifeBoard(Canvas):
     def update_display(self):
         '''LifeBoard.update_display()
         updates all of the tiles based off of the new current_tiles set'''
-        for i in self.tile_images:
-            self.delete(i)
+        #self.timer.reset()
+        for i in range(len(self.tile_images)-1, -1, -1):
+            self.delete(self.tile_images[i])
+            self.tile_images.pop(i)
         for a, b in self.current_tiles:
             self.tile_images.append(self.create_rectangle(10*a, 10*b, 10*a+10, 10*b+10, fill="yellow", outline="yellow"))
+        #print(f"timer after display: {str(self.timer)}")
+        #self.timer.reset()
     def click(self, event):
         '''LifeBoard.click()
         handler method for clicks'''
